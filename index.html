@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Async Weather Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>Async Weather Tracker</h1>
+
+    <div class="left_container">
+        <div id="search_main_caontainer">
+            <form action="">
+                <label for="city">search city: </label>
+                <input type="text" id="city" name="city">
+                <button type="submit">search</button>
+            </form>
+        </div>
+
+        <div id="history_main_caontainer">
+            <h4>search history</h4>
+            <div id="searched_history">
+                <button>delhi</button>
+                <button>mumbai</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="right_container">
+        <h4>Weather Info</h4>
+        <div id="weather_data"></div>
+    </div>
+
+    <div class="event_loop">
+        <h4>Event Loop Logs</h4>
+        <div id="log_output"></div>
+    </div>
+
+
+
+    <script>
+        // append city to list and then add the list to local storage
+
+        let form = document.querySelector("form")
+        let city = document.querySelector("#city")
+        let weather_container = document.querySelector("#weather_data")
+        let history_caontainer = document.querySelector("#searched_history")
+        let log_output = document.querySelector("#log_output")
+        let list = []
+
+        const API_KEY = "eb3719e4b687d94b01d4e07ed78df2a9"
+
+        function logMessage(msg) {
+            let p = document.createElement("p")
+            p.textContent = msg
+            log_output.appendChild(p)
+        }
+
+
+
+        async function fetchweather(city) {
+
+            log_output.innerHTML = ""
+
+            logMessage('1. Entering fetchweather function')
+
+            try {
+                let result = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`)
+
+
+                console.log(result)
+
+                data = await result.json();
+
+                logMessage('2. Made the fetch call and parsed JSON')
+
+                if (data.name) {
+
+                    logMessage('3. Valid city found')
+
+                    let card = document.createElement('div')
+
+                    card.innerHTML = `
+                    <h4>City:${data.name}</h4>
+                    <h4>Temp:${data.main.temp}</h4>
+                    <h4>Humidity:${data.main.humidity}</h4>
+                    <h4>Wind speed:${data.wind.speed}</h4>
+                    `
+
+                    weather_container.innerHTML = ""
+                    weather_container.append(card)
+
+                    save_history(city)
+                } else {
+                    logMessage('3.Invalid city, showing error')
+                    weather_container.innerHTML = `<p style="color:red;">City not found</p>`
+                }
+            } catch (error) {
+                logMessage('Error caught in fetchweather')
+                weather_container.innerHTML = `<p style="color:red;">Error fetching data</p>`
+            }
+            logMessage('4. Exiting fetchweather')
+        }
+
+
+
+        function save_history(city) {
+            if (!list.includes(city)) {
+                list.push(city)
+                localStorage.setItem("weatherHistory", JSON.stringify(list))
+            }
+            show_history()
+        }
+
+
+
+        function show_history() {
+            history_caontainer.innerHTML = ""
+            let saved = JSON.parse(localStorage.getItem("weatherHistory"))
+            if (saved) {
+                list = saved
+            }
+            list.forEach(item => {
+                let btn = document.createElement("button")
+                btn.textContent = item
+                btn.addEventListener("click", () => fetchweather(item))
+                history_caontainer.appendChild(btn)
+            })
+        }
+
+
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            fetchweather(city.value);
+        })
+
+
+
+        document.addEventListener("DOMContentLoaded", show_history)
+
+    </script>
+</body>
+
+</html>
